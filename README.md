@@ -4,6 +4,8 @@ Official code for the paper **Stability Analysis of Sharpness-Aware Minimization
 
 This repository reproduces the toy experiments and figures from the paper—Beale landscape trajectories (GD vs. SAM), gradient cosine plots, and the saddle-point demo \(f(x,y)=x^2-y^2\).
 
+![demo](./intro.gif)
+
 For background, motivation, and a full walkthrough of the results, see the lab articles:
 
 - **English:** [Stability Analysis of Sharpness-Aware Minimization](https://trustworthyai.co.kr/article/2026/sam-eng/)
