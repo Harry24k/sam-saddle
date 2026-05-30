@@ -1,4 +1,4 @@
-# Stability Analysis of Sharpness-Aware Minimization
+# 🎉 Stability Analysis of Sharpness-Aware Minimization (ICML 2026)
 
 Official code for the paper **Stability Analysis of Sharpness-Aware Minimization** (Kim et al., Trustworthy AI Lab).
 
