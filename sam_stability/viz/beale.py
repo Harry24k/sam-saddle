@@ -6,9 +6,11 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from matplotlib.animation import FuncAnimation, PillowWriter
 from matplotlib.colors import LogNorm
 
+from ..benchmarks.beale import beales
 from ..config import (
     INTRO_GIF_CONTOUR_LEVELS,
     INTRO_GIF_DURATION_SEC,
@@ -21,6 +23,8 @@ from ..config import (
     METHOD_COLORS,
     METHOD_LABELS,
     ROOT,
+    WP_ANNOTATE_T,
+    WP_RHO,
     WP_TRAJECTORY_KEY,
 )
 from ..io import load_landscape, load_results
@@ -28,6 +32,20 @@ from ..io import load_landscape, load_results
 
 def _rho_from_key(name: str) -> float:
     return float(name.split("=")[-1].split("$")[0])
+
+
+def _compute_wp_trajectory(wt_array: np.ndarray, rho: float) -> np.ndarray:
+    """Return w^p_t = w_t + rho * grad(w_t) / ||grad(w_t)|| for each row of wt_array."""
+    wp_list = []
+    for wt in wt_array:
+        wt_t = torch.tensor(wt, dtype=torch.float64, requires_grad=True)
+        loss = beales(wt_t)
+        loss.backward()
+        grad = wt_t.grad.clone()
+        gnorm = torch.norm(grad) + 1e-16
+        wpt = (wt_t + rho * grad / gnorm).detach().numpy()
+        wp_list.append(wpt)
+    return np.array(wp_list)
 
 
 def _load_baseline(root: Path | None = None):
@@ -171,8 +189,16 @@ def plot_wp(output: str | Path = "wp.pdf", *, root: Path | None = None) -> Path:
     plt.rcParams.update({"font.size": 13})
     x, y, z, logzmax, _minima, _x0, _results, _grads, gd_steps = _load_baseline(root)
     results_wp, *_ = load_results("wp.pt", root=root)
-    n_steps = len(results_wp[WP_TRAJECTORY_KEY])
-    segment = results_wp[WP_TRAJECTORY_KEY][_wp_slice(gd_steps or n_steps)]
+
+    # `results_wp` stores the w_t trajectory (current weights).  The figure must
+    # show w^p_t (perturbed weights), which oscillate visibly between basins even
+    # when w_t is essentially pinned at the saddle.  We re-derive w^p_t here using
+    # the normalised SAM perturbation formula:  w^p_t = w_t + rho * grad / ||grad||
+    # Window: 8 consecutive steps starting at the annotated t=WP_ANNOTATE_T so
+    # the alternating basin-crossing behaviour is captured with clear arrows.
+    t0 = min(WP_ANNOTATE_T, len(results_wp[WP_TRAJECTORY_KEY]) - 8)
+    wt_window = results_wp[WP_TRAJECTORY_KEY][t0: t0 + 8]
+    segment = _compute_wp_trajectory(wt_window, rho=WP_RHO)
 
     fig, ax = plt.subplots(figsize=(3, 3))
     _contour(ax, x, y, z, logzmax)

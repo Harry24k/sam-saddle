@@ -95,6 +95,10 @@ def plot_trajectory_figure(
         ("GD", "SAM"),
     ):
         px, py, pf = map(np.array, path)
+        # Clip trajectory to the visible grid bounds so divergent GD paths
+        # don't auto-scale the 3D axes far beyond the saddle surface.
+        mask = (px >= xmin) & (px <= xmax) & (py >= xmin) & (py <= xmax)
+        px, py, pf = px[mask], py[mask], pf[mask]
         ax.plot(px, py, pf, linewidth=2.5, color=color, zorder=3, label=label)
         ax.plot([px[-1]], [py[-1]], [pf[-1]], "o", markersize=8, color=color, zorder=5)
 

@@ -17,6 +17,7 @@ GD_POS_STALL_EPS = 1e-5
 
 BASELINE_RHOS = (0.0, 0.1, 0.5, 1.0)
 WP_RHO = 0.5
+WP_ANNOTATE_T = 5000  # first step shown in wp.pdf; matches paper annotation "t=5000"
 
 METHOD_COLORS = ["b", "g", "r", "y"]
 METHOD_LABELS = ["GD", "SAM(0.1)", "SAM", "SAM"]
